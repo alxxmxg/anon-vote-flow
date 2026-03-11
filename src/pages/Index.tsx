@@ -1,14 +1,36 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { VoteProvider, useVote } from "@/context/VoteContext";
+import AvisoPrivacidad from "@/components/AvisoPrivacidad";
+import LoginForm from "@/components/LoginForm";
+import OTPForm from "@/components/OTPForm";
+import BoletaVotacion from "@/components/BoletaVotacion";
+import PantallaExito from "@/components/PantallaExito";
+import ArcoModule from "@/components/ArcoModule";
 
-const Index = () => {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
-};
+function ConsultaFlow() {
+  const { step } = useVote();
+
+  switch (step) {
+    case "privacy":
+      return <AvisoPrivacidad />;
+    case "login":
+      return <LoginForm />;
+    case "otp":
+      return <OTPForm />;
+    case "ballot":
+      return <BoletaVotacion />;
+    case "success":
+      return <PantallaExito />;
+    case "arco":
+      return <ArcoModule />;
+    default:
+      return <AvisoPrivacidad />;
+  }
+}
+
+const Index = () => (
+  <VoteProvider>
+    <ConsultaFlow />
+  </VoteProvider>
+);
 
 export default Index;
