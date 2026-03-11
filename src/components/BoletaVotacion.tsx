@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useVote } from "@/context/VoteContext";
 import { Button } from "@/components/ui/button";
 import { Check, AlertTriangle, Wrench, Shield, Monitor, BookOpen, Bus } from "lucide-react";
-import { v4 as uuidv4 } from "crypto";
 
 const MAX_SELECTIONS = 3;
 
