@@ -14,16 +14,173 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bitacora_privacidad: {
+        Row: {
+          accepted_at: string
+          aceptado: boolean
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          aceptado?: boolean
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          aceptado?: boolean
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      folios_participacion: {
+        Row: {
+          created_at: string
+          folio: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          folio: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          folio?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      padron_electoral: {
+        Row: {
+          created_at: string
+          fecha_participacion: string | null
+          id: string
+          numero_control: string
+          participo: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fecha_participacion?: string | null
+          id?: string
+          numero_control: string
+          participo?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fecha_participacion?: string | null
+          id?: string
+          numero_control?: string
+          participo?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      resultados_consulta: {
+        Row: {
+          id: string
+          problematica: Database["public"]["Enums"]["problematica_tipo"]
+          updated_at: string
+          votos: number
+        }
+        Insert: {
+          id?: string
+          problematica: Database["public"]["Enums"]["problematica_tipo"]
+          updated_at?: string
+          votos?: number
+        }
+        Update: {
+          id?: string
+          problematica?: Database["public"]["Enums"]["problematica_tipo"]
+          updated_at?: string
+          votos?: number
+        }
+        Relationships: []
+      }
+      solicitudes_arco: {
+        Row: {
+          created_at: string
+          descripcion: string
+          estado: Database["public"]["Enums"]["arco_estado"]
+          id: string
+          respuesta: string | null
+          tipo: Database["public"]["Enums"]["arco_tipo"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          descripcion: string
+          estado?: Database["public"]["Enums"]["arco_estado"]
+          id?: string
+          respuesta?: string | null
+          tipo: Database["public"]["Enums"]["arco_tipo"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          descripcion?: string
+          estado?: Database["public"]["Enums"]["arco_estado"]
+          id?: string
+          respuesta?: string | null
+          tipo?: Database["public"]["Enums"]["arco_tipo"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
+      arco_estado: "pendiente" | "en_proceso" | "completada" | "rechazada"
+      arco_tipo: "acceso" | "rectificacion" | "cancelacion" | "oposicion"
+      problematica_tipo:
+        | "mantenimiento"
+        | "seguridad"
+        | "equipo_obsoleto"
+        | "oferta_academica"
+        | "transporte"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +307,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+      arco_estado: ["pendiente", "en_proceso", "completada", "rechazada"],
+      arco_tipo: ["acceso", "rectificacion", "cancelacion", "oposicion"],
+      problematica_tipo: [
+        "mantenimiento",
+        "seguridad",
+        "equipo_obsoleto",
+        "oferta_academica",
+        "transporte",
+      ],
+    },
   },
 } as const
