@@ -2,9 +2,10 @@ import { useVote } from "@/context/VoteContext";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Copy, Check } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function PantallaExito() {
-  const { folio, setStep } = useVote();
+  const { folio } = useVote();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -12,6 +13,11 @@ export default function PantallaExito() {
     await navigator.clipboard.writeText(folio);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleFinish = async () => {
+    await supabase.auth.signOut();
+    window.location.reload();
   };
 
   return (
@@ -35,19 +41,13 @@ export default function PantallaExito() {
             Folio de participación
           </p>
           <div className="flex items-center justify-between bg-muted rounded-lg px-4 py-3">
-            <p className="font-mono text-sm text-foreground break-all text-left">
-              {folio}
-            </p>
+            <p className="font-mono text-sm text-foreground break-all text-left">{folio}</p>
             <button
               onClick={handleCopy}
               className="ml-3 p-2 rounded-lg hover:bg-background transition-colors shrink-0"
               title="Copiar folio"
             >
-              {copied ? (
-                <Check className="w-4 h-4 text-accent" />
-              ) : (
-                <Copy className="w-4 h-4 text-muted-foreground" />
-              )}
+              {copied ? <Check className="w-4 h-4 text-accent" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
             </button>
           </div>
           <p className="text-xs text-muted-foreground mt-3">
@@ -56,10 +56,7 @@ export default function PantallaExito() {
         </div>
 
         <Button
-          onClick={() => {
-            // Reset everything
-            window.location.reload();
-          }}
+          onClick={handleFinish}
           variant="outline"
           className="w-full h-12 rounded-xl text-base font-semibold"
         >

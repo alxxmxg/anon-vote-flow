@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GraduationCap, Mail, Hash } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function LoginForm() {
   const { setStep, setEmail, setNumeroControl } = useVote();
@@ -14,7 +15,7 @@ export default function LoginForm() {
 
   const isValidEmail = (e: string) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(e);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -32,13 +33,28 @@ export default function LoginForm() {
     }
 
     setLoading(true);
-    // Simulate OTP send
-    setTimeout(() => {
+    try {
+      const { error: authError } = await supabase.auth.signInWithOtp({
+        email: localEmail,
+        options: {
+          data: { numero_control: localControl },
+        },
+      });
+
+      if (authError) {
+        setError(authError.message);
+        setLoading(false);
+        return;
+      }
+
       setEmail(localEmail);
       setNumeroControl(localControl);
       setLoading(false);
       setStep("otp");
-    }, 1200);
+    } catch {
+      setError("Error al enviar el código. Intenta de nuevo.");
+      setLoading(false);
+    }
   };
 
   return (

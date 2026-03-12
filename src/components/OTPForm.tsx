@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useVote } from "@/context/VoteContext";
 import { Button } from "@/components/ui/button";
 import { KeyRound } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const OTP_LENGTH = 6;
 
@@ -39,7 +40,7 @@ export default function OTPForm() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = otp.join("");
     if (code.length !== OTP_LENGTH) {
@@ -48,11 +49,31 @@ export default function OTPForm() {
     }
     setLoading(true);
     setError("");
-    // Simulate OTP verification
-    setTimeout(() => {
+
+    try {
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email,
+        token: code,
+        type: "email",
+      });
+
+      if (verifyError) {
+        setError("Código inválido o expirado. Intenta de nuevo.");
+        setLoading(false);
+        return;
+      }
+
       setLoading(false);
       setStep("ballot");
-    }, 1000);
+    } catch {
+      setError("Error al verificar el código.");
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResendTimer(60);
+    await supabase.auth.signInWithOtp({ email });
   };
 
   const maskedEmail = email
@@ -110,7 +131,7 @@ export default function OTPForm() {
           <button
             type="button"
             disabled={resendTimer > 0}
-            onClick={() => setResendTimer(60)}
+            onClick={handleResend}
             className="w-full text-sm text-muted-foreground hover:text-primary disabled:opacity-50 transition-colors text-center"
           >
             {resendTimer > 0
