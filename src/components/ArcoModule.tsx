@@ -1,9 +1,53 @@
+import { useState } from "react";
 import { useVote } from "@/context/VoteContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, Edit, UserCheck } from "lucide-react";
+import { ArrowLeft, Download, Edit, UserCheck, Send } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Textarea } from "@/components/ui/textarea";
+
+type ArcoTipo = "acceso" | "rectificacion" | "cancelacion" | "oposicion";
 
 export default function ArcoModule() {
-  const { setStep, email, numeroControl } = useVote();
+  const { setStep, email, numeroControl, user } = useVote();
+  const [showForm, setShowForm] = useState(false);
+  const [selectedTipo, setSelectedTipo] = useState<ArcoTipo | null>(null);
+  const [descripcion, setDescripcion] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmitArco = async () => {
+    if (!selectedTipo || !descripcion.trim() || !user) return;
+    setLoading(true);
+    setError("");
+
+    const { error: insertError } = await supabase
+      .from("solicitudes_arco")
+      .insert({
+        user_id: user.id,
+        tipo: selectedTipo,
+        descripcion: descripcion.trim(),
+      });
+
+    if (insertError) {
+      setError("Error al enviar la solicitud. Intenta de nuevo.");
+      setLoading(false);
+      return;
+    }
+
+    setSuccess(true);
+    setLoading(false);
+    setDescripcion("");
+    setShowForm(false);
+    setSelectedTipo(null);
+  };
+
+  const openForm = (tipo: ArcoTipo) => {
+    setSelectedTipo(tipo);
+    setShowForm(true);
+    setSuccess(false);
+    setError("");
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -32,33 +76,41 @@ export default function ArcoModule() {
           <div className="space-y-3 bg-muted rounded-lg p-4">
             <div>
               <p className="text-xs text-muted-foreground">Correo institucional</p>
-              <p className="text-sm font-medium text-foreground">
-                {email || "No registrado aún"}
-              </p>
+              <p className="text-sm font-medium text-foreground">{email || "No registrado aún"}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Número de control</p>
-              <p className="text-sm font-medium text-foreground">
-                {numeroControl || "No registrado aún"}
-              </p>
+              <p className="text-sm font-medium text-foreground">{numeroControl || "No registrado aún"}</p>
             </div>
           </div>
         </div>
 
+        {success && (
+          <div className="bg-success/10 text-success rounded-lg px-4 py-3 text-sm font-medium">
+            ✓ Solicitud ARCO enviada correctamente. Será procesada en un plazo máximo de 15 días hábiles.
+          </div>
+        )}
+
         <div className="space-y-3">
           <h2 className="text-sm font-bold text-foreground">Ejercer tus derechos</h2>
 
-          <button className="w-full flex items-center gap-3 bg-card border border-border rounded-xl p-4 hover:border-primary/40 transition-colors text-left">
+          <button
+            onClick={() => openForm("acceso")}
+            className="w-full flex items-center gap-3 bg-card border border-border rounded-xl p-4 hover:border-primary/40 transition-colors text-left"
+          >
             <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
               <Download className="w-5 h-5 text-secondary-foreground" />
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">Acceso</p>
-              <p className="text-xs text-muted-foreground">Descargar una copia de todos tus datos almacenados.</p>
+              <p className="text-xs text-muted-foreground">Solicitar una copia de todos tus datos almacenados.</p>
             </div>
           </button>
 
-          <button className="w-full flex items-center gap-3 bg-card border border-border rounded-xl p-4 hover:border-primary/40 transition-colors text-left">
+          <button
+            onClick={() => openForm("rectificacion")}
+            className="w-full flex items-center gap-3 bg-card border border-border rounded-xl p-4 hover:border-primary/40 transition-colors text-left"
+          >
             <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
               <Edit className="w-5 h-5 text-secondary-foreground" />
             </div>
@@ -68,6 +120,36 @@ export default function ArcoModule() {
             </div>
           </button>
         </div>
+
+        {showForm && (
+          <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+            <h3 className="text-sm font-bold text-foreground">
+              Solicitud de {selectedTipo === "acceso" ? "Acceso" : "Rectificación"}
+            </h3>
+            <Textarea
+              placeholder="Describe tu solicitud..."
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              className="min-h-[100px]"
+            />
+            {error && (
+              <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>
+            )}
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setShowForm(false)} className="flex-1">
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSubmitArco}
+                disabled={loading || !descripcion.trim() || !user}
+                className="flex-1"
+              >
+                <Send className="w-4 h-4 mr-2" />
+                {loading ? "Enviando..." : "Enviar"}
+              </Button>
+            </div>
+          </div>
+        )}
 
         <p className="text-xs text-muted-foreground leading-relaxed">
           Las solicitudes ARCO serán procesadas y validadas por el administrador del sistema en un plazo máximo de 15 días hábiles. Tu voto anónimo no puede ser accedido ni modificado ya que no está vinculado a tu identidad.

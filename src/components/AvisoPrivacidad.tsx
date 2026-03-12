@@ -7,8 +7,6 @@ export default function AvisoPrivacidad() {
 
   const handleAccept = () => {
     setPrivacyAccepted(true);
-    // In production: POST to /api/v1/privacy/accept with timestamp
-    console.log("Privacy accepted at:", new Date().toISOString());
     setStep("login");
   };
 
