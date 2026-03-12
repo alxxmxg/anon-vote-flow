@@ -49,7 +49,7 @@ export default function AdminPanel() {
     setLoading(false);
   };
 
-  const updateArcoStatus = async (id: string, estado: string) => {
+  const updateArcoStatus = async (id: string, estado: "pendiente" | "en_proceso" | "completada" | "rechazada") => {
     await supabase.from("solicitudes_arco").update({ estado }).eq("id", id);
     loadData();
   };
