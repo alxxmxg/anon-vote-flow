@@ -170,6 +170,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_vote: {
+        Args: { prob_id: Database["public"]["Enums"]["problematica_tipo"] }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"
