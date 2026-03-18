@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Shield, Lock } from "lucide-react";
 
 // Demo admin password — change this to whatever you want
-const ADMIN_PASSWORD = "admin2024";
+const ADMIN_PASSWORD = "admin";
 
 export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -18,7 +18,7 @@ export default function AdminPage() {
     if (password === ADMIN_PASSWORD) {
       setIsAdmin(true);
     } else {
-      setError("Contraseña incorrecta. (Demo: admin2024)");
+      setError("Contraseña incorrecta.");
     }
   };
 
@@ -35,12 +35,6 @@ export default function AdminPage() {
         <h1 className="text-2xl font-bold text-center text-foreground mb-2">Panel Admin</h1>
         <p className="text-sm text-muted-foreground text-center mb-2">Acceso restringido a administradores</p>
 
-        <div className="mb-8 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 flex gap-2 items-start">
-          <span className="text-yellow-500 text-lg leading-none mt-0.5">⚠️</span>
-          <p className="text-xs text-yellow-800 leading-relaxed">
-            <strong>Modo Demo.</strong> Contraseña: <code className="font-mono bg-yellow-100 px-1 rounded">admin2024</code>
-          </p>
-        </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="relative">
