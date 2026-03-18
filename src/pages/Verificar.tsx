@@ -1,24 +1,33 @@
 import { useState } from "react";
-import { Search, CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
+import { Search, CheckCircle2, XCircle, ShieldCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { verifyFolio, getConsultaConfig } from "@/lib/mockDB";
+import { verifyFolio } from "@/lib/mockDB";
+import { useConsultaConfig } from "@/lib/supabaseHooks";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function VerificarPage() {
   const [folio, setFolio] = useState("");
   const [result, setResult] = useState<"none" | "found" | "not_found">("none");
   const [loading, setLoading] = useState(false);
-  const cfg = getConsultaConfig();
+  const { data: cfg, isLoading: loadingCfg } = useConsultaConfig();
 
   const handleVerify = async () => {
     if (!folio.trim()) return;
     setLoading(true);
     await new Promise((r) => setTimeout(r, 500));
-    const found = verifyFolio(folio.trim());
-    setResult(found ? "found" : "not_found");
+    const { exists } = await verifyFolio(folio.trim());
+    setResult(exists ? "found" : "not_found");
     setLoading(false);
   };
+
+  if (loadingCfg || !cfg) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-5 py-8">

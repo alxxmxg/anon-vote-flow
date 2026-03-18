@@ -1,13 +1,13 @@
 import { useVote } from "@/context/VoteContext";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Copy, Check, Building2, ExternalLink } from "lucide-react";
+import { CheckCircle2, Copy, Check, Building2, ExternalLink, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { getConsultaConfig } from "@/lib/mockDB";
+import { useConsultaConfig } from "@/lib/supabaseHooks";
 
 export default function PantallaExito() {
   const { folio, signOut } = useVote();
   const [copied, setCopied] = useState(false);
-  const cfg = getConsultaConfig();
+  const { data: cfg, isLoading } = useConsultaConfig();
 
   const handleCopy = async () => {
     if (!folio) return;
@@ -15,6 +15,14 @@ export default function PantallaExito() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (isLoading || !cfg) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-5 py-8 bg-background">

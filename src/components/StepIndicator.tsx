@@ -13,7 +13,7 @@ const STEP_INDEX: Partial<Record<AppStep, number>> = {
 };
 
 export default function StepIndicator({ step }: { step: AppStep }) {
-  if (step === "arco") return null; // Don't show on ARCO module
+  if (step === "arco" || step === "intro") return null; // Don't show on ARCO or Intro
 
   const current = STEP_INDEX[step] ?? 0;
 

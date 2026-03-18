@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 import { getSession, clearSession } from "@/lib/mockDB";
 
-export type AppStep = "privacy" | "login" | "otp" | "ballot" | "success" | "arco";
+export type AppStep = "intro" | "privacy" | "login" | "otp" | "ballot" | "success" | "arco";
 
 interface VoteContextType {
   step: AppStep;
@@ -20,7 +20,7 @@ interface VoteContextType {
 const VoteContext = createContext<VoteContextType | null>(null);
 
 export function VoteProvider({ children }: { children: ReactNode }) {
-  const [step, setStep] = useState<AppStep>("privacy");
+  const [step, setStep] = useState<AppStep>("intro");
   const [email, setEmail] = useState("");
   const [numeroControl, setNumeroControl] = useState("");
   const [folio, setFolio] = useState<string | null>(null);
@@ -32,7 +32,7 @@ export function VoteProvider({ children }: { children: ReactNode }) {
     setNumeroControl("");
     setFolio(null);
     setPrivacyAccepted(false);
-    setStep("privacy");
+    setStep("intro");
   };
 
   return (

@@ -35,9 +35,7 @@ export default function ArcoModule() {
     setLoading(true);
     setError("");
 
-    await new Promise((r) => setTimeout(r, 600));
-
-    insertSolicitudArco(email, selectedTipo, descripcion.trim());
+    await insertSolicitudArco(email, selectedTipo, descripcion.trim());
     setSuccess(true);
     setLoading(false);
     setDescripcion("");

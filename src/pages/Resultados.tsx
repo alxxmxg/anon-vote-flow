@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import { getResultados, getParticipantes, getConsultaConfig, type ResultadoVoto } from "@/lib/mockDB";
-import { Users, BarChart3, RefreshCw } from "lucide-react";
+import { useConsultaConfig, useResultados, useParticipantes } from "@/lib/supabaseHooks";
+import { Users, BarChart3, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -16,18 +16,28 @@ const LABELS: Record<string, string> = {
 const COLORS = ["hsl(220,70%,45%)", "hsl(160,60%,40%)", "hsl(38,92%,50%)", "hsl(280,60%,50%)", "hsl(0,65%,50%)"];
 
 export default function ResultadosPage() {
-  const [resultados, setResultados] = useState<ResultadoVoto[]>([]);
-  const [participantes, setParticipantes] = useState(0);
+  const { data: cfg, isLoading: loadingCfg } = useConsultaConfig();
+  const { data: rawResultados, isLoading: loadingRes, refetch: refetchRes } = useResultados();
+  const { data: participantes = 0, isLoading: loadingPart, refetch: refetchPart } = useParticipantes();
   const [lastUpdate, setLastUpdate] = useState(new Date());
-  const cfg = getConsultaConfig();
 
   const load = () => {
-    setResultados(getResultados());
-    setParticipantes(getParticipantes());
+    refetchRes();
+    refetchPart();
     setLastUpdate(new Date());
   };
 
-  useEffect(() => { load(); }, []);
+  if (loadingCfg || loadingRes || loadingPart || !cfg || !rawResultados) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const resultados = Object.entries(rawResultados)
+    .map(([problematica, votos]) => ({ problematica, votos }))
+    .sort((a, b) => b.votos - a.votos);
 
   const totalVotos = resultados.reduce((a, r) => a + r.votos, 0);
 

@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment / Secrets
+.env
+.env.*
+
+# Temp debug files
+playwright-debug.js

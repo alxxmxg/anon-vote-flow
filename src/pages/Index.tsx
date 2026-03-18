@@ -1,4 +1,5 @@
 import { VoteProvider, useVote } from "@/context/VoteContext";
+import IntroPage from "@/components/IntroPage";
 import AvisoPrivacidad from "@/components/AvisoPrivacidad";
 import LoginForm from "@/components/LoginForm";
 import OTPForm from "@/components/OTPForm";
@@ -7,11 +8,10 @@ import PantallaExito from "@/components/PantallaExito";
 import ArcoModule from "@/components/ArcoModule";
 import StepIndicator from "@/components/StepIndicator";
 import ThemeToggle from "@/components/ThemeToggle";
-import { isConsultaActive, getConsultaConfig } from "@/lib/mockDB";
-import { CalendarX } from "lucide-react";
+import { useConsultaConfig } from "@/lib/supabaseHooks";
+import { CalendarX, Loader2 } from "lucide-react";
 
-function ConsultaClosed() {
-  const cfg = getConsultaConfig();
+function ConsultaClosed({ cfg }: { cfg: any }) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-5 bg-background text-center">
       <div className="absolute top-4 right-4"><ThemeToggle /></div>
@@ -38,13 +38,27 @@ function ConsultaClosed() {
 
 function ConsultaFlow() {
   const { step } = useVote();
+  const { data: cfg, isLoading } = useConsultaConfig();
 
-  if (!isConsultaActive() && step === "privacy") return <ConsultaClosed />;
+  if (isLoading || !cfg) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const isConsultaActive = cfg.active && 
+    (!cfg.startDate || new Date() >= new Date(cfg.startDate)) && 
+    (!cfg.endDate || new Date() <= new Date(cfg.endDate));
+
+  if (!isConsultaActive && (step === "privacy" || step === "intro")) return <ConsultaClosed cfg={cfg} />;
 
   return (
-    <div className="relative">
+    <div className="relative min-h-screen bg-background text-foreground transition-colors duration-300">
       <div className="absolute top-2 right-3 z-20"><ThemeToggle /></div>
-      {step !== "arco" && <StepIndicator step={step} />}
+      {step !== "arco" && step !== "intro" && <StepIndicator step={step} />}
+      {step === "intro"    && <IntroPage />}
       {step === "privacy"  && <AvisoPrivacidad />}
       {step === "login"    && <LoginForm />}
       {step === "otp"      && <OTPForm />}

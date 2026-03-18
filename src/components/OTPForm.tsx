@@ -1,21 +1,20 @@
 import { useState, useRef, useEffect } from "react";
 import { useVote } from "@/context/VoteContext";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { KeyRound } from "lucide-react";
 import { verifyOtp, generateOtp } from "@/lib/mockDB";
 
-const OTP_LENGTH = 6;
-
 export default function OTPForm() {
-  const { email, setStep } = useVote();
-  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
+  const { email, numeroControl, setStep } = useVote();
+  const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    inputRefs.current[0]?.focus();
+    inputRef.current?.focus();
   }, []);
 
   useEffect(() => {
@@ -24,49 +23,19 @@ export default function OTPForm() {
     return () => clearTimeout(t);
   }, [resendTimer]);
 
-  const handleChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-    const next = [...otp];
-    next[index] = value.slice(-1);
-    setOtp(next);
-    if (value && index < OTP_LENGTH - 1) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
-
-  // Paste support: distribute 6 digits across inputs
-  const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, OTP_LENGTH);
-    if (!pasted) return;
-    const next = Array(OTP_LENGTH).fill("");
-    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
-    setOtp(next);
-    const focusIdx = Math.min(pasted.length, OTP_LENGTH - 1);
-    inputRefs.current[focusIdx]?.focus();
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const code = otp.join("");
-    if (code.length !== OTP_LENGTH) {
-      setError("Introduce el código completo de 6 dígitos.");
+    const trimmed = code.trim();
+    if (trimmed.length < 6) {
+      setError("Introduce el código completo que recibiste por correo.");
       return;
     }
     setLoading(true);
     setError("");
 
-    await new Promise((r) => setTimeout(r, 500));
-
-    const valid = verifyOtp(email, code);
-    if (!valid) {
-      setError("Código inválido. Revisa el aviso que apareció en pantalla.");
+    const result = await verifyOtp(email, numeroControl ?? "", trimmed);
+    if (!result.success) {
+      setError(result.error ?? "Código inválido. Intenta nuevamente.");
       setLoading(false);
       return;
     }
@@ -75,10 +44,12 @@ export default function OTPForm() {
     setStep("ballot");
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     setResendTimer(60);
-    const code = generateOtp(email);
-    alert(`[MODO DEMO] Tu nuevo código OTP es:\n\n  ${code}`);
+    const result = await generateOtp(email, numeroControl ?? "");
+    if (!result.success) {
+      setError("Fallo al reenviar código");
+    }
   };
 
   const maskedEmail = email
@@ -98,28 +69,26 @@ export default function OTPForm() {
           Verificación OTP
         </h1>
         <p className="text-sm text-muted-foreground text-center mb-2">
-          Ingresa el código de 6 dígitos mostrado para{" "}
+          Ingresa el código que enviamos a{" "}
           <span className="font-medium text-foreground">{maskedEmail}</span>
         </p>
-        <p className="text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 text-center mb-8">
-          El código apareció en un aviso de tu navegador. Si lo cerraste, usa "Reenviar".
+        <p className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-center mb-8">
+          Revisa tu bandeja de entrada (y spam). El código puede tener entre 6 y 10 dígitos.
         </p>
 
         <form onSubmit={handleSubmit}>
-          <div className="flex justify-center gap-2.5 mb-6" onPaste={handlePaste}>
-            {otp.map((digit, i) => (
-              <input
-                key={i}
-                ref={(el) => { inputRefs.current[i] = el; }}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleChange(i, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(i, e)}
-                className="w-12 h-14 text-center text-xl font-semibold bg-card border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition-all"
-              />
-            ))}
+          <div className="mb-6">
+            <Input
+              ref={inputRef}
+              type="text"
+              inputMode="numeric"
+              placeholder="Pega tu código aquí"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+              className="h-16 text-center text-2xl font-mono font-bold tracking-[0.3em] rounded-xl border-2 border-primary/30 focus:border-primary"
+              maxLength={10}
+              autoComplete="one-time-code"
+            />
           </div>
 
           {error && (

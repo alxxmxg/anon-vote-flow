@@ -23,8 +23,8 @@ export default function LoginForm() {
       setError("Todos los campos son obligatorios.");
       return;
     }
-    if (!isValidEmail(localEmail)) {
-      setError("Introduce un correo institucional válido.");
+    if (!localEmail.toLowerCase().endsWith('@itmexicali.edu.mx')) {
+      setError("Solo se permiten correos institucionales @itmexicali.edu.mx");
       return;
     }
     if (localControl.length < 5) {
@@ -37,14 +37,17 @@ export default function LoginForm() {
     await new Promise((r) => setTimeout(r, 600));
 
     // Generate OTP (shown in browser console for demo)
-    const code = generateOtp(localEmail);
+    const result = await generateOtp(localEmail, localControl);
+    if (!result.success) {
+      setError(result.error ?? "Error al generar código.");
+      setLoading(false);
+      return;
+    }
+    
     setSession({ email: localEmail, numeroControl: localControl });
     setEmail(localEmail);
     setNumeroControl(localControl);
     setLoading(false);
-
-    // Show code in a visible alert during demo
-    alert(`[MODO DEMO] Tu código OTP es:\n\n  ${code}\n\n(En producción se enviaría por email)`);
 
     setStep("otp");
   };
@@ -53,10 +56,10 @@ export default function LoginForm() {
     <div className="min-h-screen flex flex-col items-center justify-center px-5 py-8 bg-background">
       <div className="w-full max-w-md">
         {/* Demo banner */}
-        <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 flex gap-2 items-start">
-          <span className="text-yellow-500 text-lg leading-none mt-0.5">⚠️</span>
-          <p className="text-xs text-yellow-800 leading-relaxed">
-            <strong>Modo Demo.</strong> Los datos se guardan localmente en tu navegador. El código OTP aparecerá en un aviso en pantalla.
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex gap-2 items-start">
+          <span className="text-blue-500 text-lg leading-none mt-0.5">🏛️</span>
+          <p className="text-xs text-blue-800 leading-relaxed">
+            <strong>Sistema Institucional.</strong> Se enviará un código de verificación a tu correo <strong>@itmexicali.edu.mx</strong> para garantizar tu identidad.
           </p>
         </div>
 
@@ -83,7 +86,7 @@ export default function LoginForm() {
               <Input
                 id="email"
                 type="email"
-                placeholder="tu.nombre@universidad.edu"
+                placeholder="tu.nombre@itmexicali.edu.mx"
                 value={localEmail}
                 onChange={(e) => setLocalEmail(e.target.value)}
                 className="pl-10 h-12 rounded-xl"

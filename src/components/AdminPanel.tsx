@@ -11,13 +11,14 @@ import {
   Trash2, Search, Printer, Tag,
 } from "lucide-react";
 import {
-  getResultados, getSolicitudesArco, getParticipantes,
-  getNotasForProblematica, updateArcoEstado, getProblematicasConfig,
-  saveProblematicasConfig, getConsultaConfig, saveConsultaConfig,
-  resetConsulta, getAllNotasGrouped,
-  type ResultadoVoto, type SolicitudArco, type NotaAnonima,
-  type ProblematicaConfig, type ConsultaConfig,
+  type ArcoSolicitud as SolicitudArco, type ProblematicaConfig, type ConsultaConfig,
+  resetConsulta,
 } from "@/lib/mockDB";
+import { 
+  useResultados, useParticipantes, useNotasAnonimas, 
+  useProblematicas, useConsultaConfig, useSolicitudesArco,
+  useUpdateConfig, useUpdateProblematica, useUpdateArcoStatus 
+} from "@/lib/supabaseHooks";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const COLORS = ["hsl(220,70%,45%)", "hsl(160,60%,40%)", "hsl(38,92%,50%)", "hsl(280,60%,50%)", "hsl(0,65%,50%)"];
@@ -32,32 +33,39 @@ const ESTADO_COLORS: Record<string, string> = {
 type Tab = "resultados" | "arco" | "categorias" | "config";
 
 export default function AdminPanel() {
-  const [resultados,     setResultados]     = useState<ResultadoVoto[]>([]);
-  const [solicitudes,    setSolicitudes]    = useState<SolicitudArco[]>([]);
-  const [totalVotantes,  setTotalVotantes]  = useState(0);
+  // DATA HOOKS
+  const { data: rawResultados = {}, refetch: refRes } = useResultados();
+  const { data: solicitudes = [], refetch: refArco } = useSolicitudesArco();
+  const { data: totalVotantes = 0, refetch: refPart } = useParticipantes();
+  const { data: notasMap = {}, refetch: refNotas } = useNotasAnonimas();
+  const { data: probs = [], refetch: refProbs } = useProblematicas();
+  const { data: fetchedCfg, refetch: refCfg } = useConsultaConfig();
+
+  // MUTATION HOOKS
+  const updateConfig = useUpdateConfig();
+  const updateProb = useUpdateProblematica();
+  const updateArco = useUpdateArcoStatus();
+
   const [tab,            setTab]            = useState<Tab>("resultados");
   const [expandedNotes,  setExpandedNotes]  = useState<Set<string>>(new Set());
-  const [notasMap,       setNotasMap]       = useState<Record<string, NotaAnonima[]>>({});
   const [noteSearch,     setNoteSearch]     = useState("");
-  // categories
-  const [probs,          setProbs]          = useState<ProblematicaConfig[]>([]);
   const [editingProb,    setEditingProb]    = useState<string | null>(null);
   const [probDraft,      setProbDraft]      = useState<ProblematicaConfig | null>(null);
-  // config
-  const [cfg,            setCfg]            = useState<ConsultaConfig>(getConsultaConfig());
+  const [cfg,            setCfg]            = useState<ConsultaConfig>({ titulo: "", institucion: "", active: true });
   const [resetConfirm,   setResetConfirm]   = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (fetchedCfg) setCfg(fetchedCfg);
+  }, [fetchedCfg]);
+
   const loadData = () => {
-    setResultados(getResultados());
-    setSolicitudes(getSolicitudesArco());
-    setTotalVotantes(getParticipantes());
-    setNotasMap(getAllNotasGrouped());
-    setProbs(getProblematicasConfig());
-    setCfg(getConsultaConfig());
+    refRes(); refArco(); refPart(); refNotas(); refProbs(); refCfg();
   };
 
-  useEffect(() => { loadData(); }, []);
+  const resultados = Object.entries(rawResultados)
+    .map(([problematica, votos]) => ({ problematica, votos }))
+    .sort((a, b) => b.votos - a.votos);
 
   // ---- Helpers ----
   const toggleNotes = (prob: string) => {
@@ -68,9 +76,8 @@ export default function AdminPanel() {
     });
   };
 
-  const handleUpdateArco = (id: string, estado: SolicitudArco["estado"]) => {
-    updateArcoEstado(id, estado);
-    loadData();
+  const handleUpdateArco = async (id: string, estado: SolicitudArco["estado"]) => {
+    await updateArco.mutateAsync({ id, estado });
   };
 
   const exportCSV = () => {
@@ -105,8 +112,8 @@ export default function AdminPanel() {
     loadData();
   };
 
-  const handleSaveConfig = () => {
-    saveConsultaConfig(cfg);
+  const handleSaveConfig = async () => {
+    await updateConfig.mutateAsync(cfg);
     alert("Configuración guardada ✓");
   };
 
@@ -115,11 +122,9 @@ export default function AdminPanel() {
     setProbDraft({ ...p });
   };
 
-  const saveProb = () => {
+  const saveProb = async () => {
     if (!probDraft) return;
-    const updated = probs.map((p) => p.id === probDraft.id ? probDraft : p);
-    saveProblematicasConfig(updated);
-    setProbs(updated);
+    await updateProb.mutateAsync(probDraft);
     setEditingProb(null);
   };
 
@@ -293,7 +298,7 @@ export default function AdminPanel() {
                         <div key={nota.id} className="px-4 py-3">
                           <p className="text-sm text-foreground leading-relaxed">"{nota.nota}"</p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Anónima — {new Date(nota.created_at).toLocaleDateString("es-MX", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            Anónima — {new Date(nota.date).toLocaleDateString("es-MX", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                           </p>
                         </div>
                       ))}
@@ -317,7 +322,7 @@ export default function AdminPanel() {
                   <span className={`text-xs font-medium px-2 py-0.5 rounded capitalize ${ESTADO_COLORS[s.estado] ?? ""}`}>{s.estado.replace("_", " ")}</span>
                 </div>
                 <p className="text-sm text-foreground">{s.descripcion}</p>
-                <p className="text-xs text-muted-foreground mt-1">{new Date(s.created_at).toLocaleDateString("es-MX", { year: "numeric", month: "short", day: "numeric" })}</p>
+                <p className="text-xs text-muted-foreground mt-1">{new Date((s as any).created_at || s.fecha || new Date()).toLocaleDateString("es-MX", { year: "numeric", month: "short", day: "numeric" })}</p>
                 <div className="flex gap-2 mt-3 flex-wrap">
                   {s.estado === "pendiente" && <>
                     <Button size="sm" variant="outline" onClick={() => handleUpdateArco(s.id, "en_proceso")}>En proceso</Button>

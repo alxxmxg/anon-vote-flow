@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useVote } from "@/context/VoteContext";
 import { Button } from "@/components/ui/button";
-import { Check, AlertTriangle, Wrench, Shield, Monitor, BookOpen, Bus, MessageSquare, X } from "lucide-react";
-import { castVote, getProblematicasConfig, type ProblematicaConfig } from "@/lib/mockDB";
+import { Check, AlertTriangle, Wrench, Shield, Monitor, BookOpen, Bus, MessageSquare, X, Loader2 } from "lucide-react";
+import { castVote } from "@/lib/mockDB";
+import { useProblematicas } from "@/lib/supabaseHooks";
 
 // Icons map for each default id
 const ICONS: Record<string, React.ReactNode> = {
@@ -15,7 +16,8 @@ const ICONS: Record<string, React.ReactNode> = {
 
 export default function BoletaVotacion() {
   const { setStep, setFolio, email, numeroControl } = useVote();
-  const [problematicas] = useState<ProblematicaConfig[]>(getProblematicasConfig);
+  const { data: problematicas, isLoading: loadingProbs } = useProblematicas();
+  
   const [selected,     setSelected]     = useState<Set<string>>(new Set());
   const [notes,        setNotes]        = useState<Record<string, string>>({});
   const [showNote,     setShowNote]     = useState<Set<string>>(new Set());
@@ -53,7 +55,7 @@ export default function BoletaVotacion() {
   const confirmVote = async () => {
     setLoading(true); setError("");
     await new Promise((r) => setTimeout(r, 800));
-    const result = castVote(email, numeroControl, Array.from(selected), notes);
+    const result = await castVote(email, numeroControl, Array.from(selected), notes);
     if (!result.success) {
       setError(result.error ?? "Error al procesar tu voto."); setLoading(false); setShowConfirm(false); return;
     }
@@ -61,6 +63,14 @@ export default function BoletaVotacion() {
   };
 
   const selectedCount = selected.size;
+
+  if (loadingProbs || !problematicas) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
