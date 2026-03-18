@@ -1,95 +1,28 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import AdminPanel from "@/components/AdminPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Shield } from "lucide-react";
+import { Shield, Lock } from "lucide-react";
+
+// Demo admin password — change this to whatever you want
+const ADMIN_PASSWORD = "admin2024";
 
 export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [step, setStep] = useState<"login" | "otp" | "panel">("login");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [sendingOtp, setSendingOtp] = useState(false);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_, session) => {
-        if (session?.user) {
-          const { data } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", session.user.id)
-            .eq("role", "admin")
-            .maybeSingle();
-          
-          if (data) {
-            setIsAdmin(true);
-            setStep("panel");
-          } else {
-            setError("No tienes permisos de administrador.");
-            await supabase.auth.signOut();
-          }
-        }
-        setLoading(false);
-      }
-    );
-
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const { data } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id)
-          .eq("role", "admin")
-          .maybeSingle();
-        
-        if (data) {
-          setIsAdmin(true);
-          setStep("panel");
-        }
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSendingOtp(true);
-    setError("");
-    const { error } = await supabase.auth.signInWithOtp({ email });
-    if (error) {
-      setError(error.message);
-      setSendingOtp(false);
-      return;
-    }
-    setSendingOtp(false);
-    setStep("otp");
-  };
-
-  const handleVerify = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const { error } = await supabase.auth.verifyOtp({ email, token: otp, type: "email" });
-    if (error) {
-      setError("Código inválido o expirado.");
-      return;
+    if (password === ADMIN_PASSWORD) {
+      setIsAdmin(true);
+    } else {
+      setError("Contraseña incorrecta. (Demo: admin2024)");
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">Verificando acceso...</p>
-      </div>
-    );
-  }
-
-  if (isAdmin && step === "panel") return <AdminPanel />;
+  if (isAdmin) return <AdminPanel />;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-5 py-8 bg-background">
@@ -100,38 +33,36 @@ export default function AdminPage() {
           </div>
         </div>
         <h1 className="text-2xl font-bold text-center text-foreground mb-2">Panel Admin</h1>
-        <p className="text-sm text-muted-foreground text-center mb-8">Acceso restringido a administradores</p>
+        <p className="text-sm text-muted-foreground text-center mb-2">Acceso restringido a administradores</p>
 
-        {step === "login" && (
-          <form onSubmit={handleLogin} className="space-y-4">
-            <Input
-              type="email"
-              placeholder="admin@universidad.edu"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-12 rounded-xl"
-            />
-            {error && <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>}
-            <Button type="submit" disabled={sendingOtp} className="w-full h-12 rounded-xl">
-              {sendingOtp ? "Enviando..." : "Enviar código OTP"}
-            </Button>
-          </form>
-        )}
+        <div className="mb-8 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 flex gap-2 items-start">
+          <span className="text-yellow-500 text-lg leading-none mt-0.5">⚠️</span>
+          <p className="text-xs text-yellow-800 leading-relaxed">
+            <strong>Modo Demo.</strong> Contraseña: <code className="font-mono bg-yellow-100 px-1 rounded">admin2024</code>
+          </p>
+        </div>
 
-        {step === "otp" && (
-          <form onSubmit={handleVerify} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              type="text"
-              placeholder="Código OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              maxLength={6}
-              className="h-12 rounded-xl text-center text-xl tracking-widest"
+              type="password"
+              placeholder="Contraseña de administrador"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="pl-10 h-12 rounded-xl"
+              autoFocus
             />
-            {error && <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>}
-            <Button type="submit" className="w-full h-12 rounded-xl">Verificar</Button>
-          </form>
-        )}
+          </div>
+          {error && <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>}
+          <Button type="submit" className="w-full h-12 rounded-xl text-base font-semibold">
+            Ingresar al Panel
+          </Button>
+        </form>
+
+        <a href="/" className="block mt-6 text-xs text-muted-foreground hover:text-primary transition-colors text-center">
+          ← Volver al sistema de votación
+        </a>
       </div>
     </div>
   );

@@ -96,4 +96,53 @@
   .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
+
+  /* Semantic success/warning utilities using CSS variables */
+  .bg-success {
+    background-color: hsl(var(--success));
+  }
+  .bg-success\/10 {
+    background-color: hsl(var(--success) / 0.1);
+  }
+  .text-success {
+    color: hsl(var(--success));
+  }
+  .border-success {
+    border-color: hsl(var(--success));
+  }
+  .bg-warning {
+    background-color: hsl(var(--warning));
+  }
+  .bg-warning\/10 {
+    background-color: hsl(var(--warning) / 0.1);
+  }
+  .text-warning {
+    color: hsl(var(--warning));
+  }
 }
+
+/* Step transition animation */
+@keyframes step-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.min-h-screen {
+  animation: step-enter 0.35s ease-out both;
+}
+
+/* ==================== PRINT STYLES ==================== */
+@media print {
+  button, nav { display: none !important; }
+  body   { background: white !important; color: black !important; }
+  .bg-card { background: white !important; border: 1px solid #ddd !important; }
+  .border-border { border-color: #ddd !important; }
+  .text-muted-foreground { color: #555 !important; }
+  .text-foreground { color: #111 !important; }
+  .text-primary    { color: #1a4db5 !important; }
+  .bg-primary      { background: #1a4db5 !important; }
+  .text-primary-foreground { color: white !important; }
+  .bg-card { page-break-inside: avoid; }
+  .sticky { position: static !important; }
+}
+

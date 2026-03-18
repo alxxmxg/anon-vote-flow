@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GraduationCap, Mail, Hash } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { generateOtp, setSession } from "@/lib/mockDB";
 
 export default function LoginForm() {
   const { setStep, setEmail, setNumeroControl } = useVote();
@@ -33,33 +33,33 @@ export default function LoginForm() {
     }
 
     setLoading(true);
-    try {
-      const { error: authError } = await supabase.auth.signInWithOtp({
-        email: localEmail,
-        options: {
-          data: { numero_control: localControl },
-        },
-      });
+    // Simulate network delay
+    await new Promise((r) => setTimeout(r, 600));
 
-      if (authError) {
-        setError(authError.message);
-        setLoading(false);
-        return;
-      }
+    // Generate OTP (shown in browser console for demo)
+    const code = generateOtp(localEmail);
+    setSession({ email: localEmail, numeroControl: localControl });
+    setEmail(localEmail);
+    setNumeroControl(localControl);
+    setLoading(false);
 
-      setEmail(localEmail);
-      setNumeroControl(localControl);
-      setLoading(false);
-      setStep("otp");
-    } catch {
-      setError("Error al enviar el código. Intenta de nuevo.");
-      setLoading(false);
-    }
+    // Show code in a visible alert during demo
+    alert(`[MODO DEMO] Tu código OTP es:\n\n  ${code}\n\n(En producción se enviaría por email)`);
+
+    setStep("otp");
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-5 py-8 bg-background">
       <div className="w-full max-w-md">
+        {/* Demo banner */}
+        <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 flex gap-2 items-start">
+          <span className="text-yellow-500 text-lg leading-none mt-0.5">⚠️</span>
+          <p className="text-xs text-yellow-800 leading-relaxed">
+            <strong>Modo Demo.</strong> Los datos se guardan localmente en tu navegador. El código OTP aparecerá en un aviso en pantalla.
+          </p>
+        </div>
+
         <div className="flex justify-center mb-6">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
             <GraduationCap className="w-8 h-8 text-primary" />
@@ -121,7 +121,7 @@ export default function LoginForm() {
             disabled={loading}
             className="w-full h-12 text-base font-semibold rounded-xl"
           >
-            {loading ? "Enviando código..." : "Solicitar Código OTP"}
+            {loading ? "Generando código..." : "Solicitar Código OTP"}
           </Button>
         </form>
 

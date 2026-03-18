@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useVote } from "@/context/VoteContext";
 import { Button } from "@/components/ui/button";
 import { KeyRound } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { verifyOtp, generateOtp } from "@/lib/mockDB";
 
 const OTP_LENGTH = 6;
 
@@ -40,6 +40,18 @@ export default function OTPForm() {
     }
   };
 
+  // Paste support: distribute 6 digits across inputs
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, OTP_LENGTH);
+    if (!pasted) return;
+    const next = Array(OTP_LENGTH).fill("");
+    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
+    setOtp(next);
+    const focusIdx = Math.min(pasted.length, OTP_LENGTH - 1);
+    inputRefs.current[focusIdx]?.focus();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = otp.join("");
@@ -50,30 +62,23 @@ export default function OTPForm() {
     setLoading(true);
     setError("");
 
-    try {
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        email,
-        token: code,
-        type: "email",
-      });
+    await new Promise((r) => setTimeout(r, 500));
 
-      if (verifyError) {
-        setError("Código inválido o expirado. Intenta de nuevo.");
-        setLoading(false);
-        return;
-      }
-
+    const valid = verifyOtp(email, code);
+    if (!valid) {
+      setError("Código inválido. Revisa el aviso que apareció en pantalla.");
       setLoading(false);
-      setStep("ballot");
-    } catch {
-      setError("Error al verificar el código.");
-      setLoading(false);
+      return;
     }
+
+    setLoading(false);
+    setStep("ballot");
   };
 
-  const handleResend = async () => {
+  const handleResend = () => {
     setResendTimer(60);
-    await supabase.auth.signInWithOtp({ email });
+    const code = generateOtp(email);
+    alert(`[MODO DEMO] Tu nuevo código OTP es:\n\n  ${code}`);
   };
 
   const maskedEmail = email
@@ -90,15 +95,18 @@ export default function OTPForm() {
         </div>
 
         <h1 className="text-2xl font-bold text-center text-foreground mb-2">
-          Verificación 2FA
+          Verificación OTP
         </h1>
-        <p className="text-sm text-muted-foreground text-center mb-8">
-          Ingresa el código de 6 dígitos enviado a{" "}
+        <p className="text-sm text-muted-foreground text-center mb-2">
+          Ingresa el código de 6 dígitos mostrado para{" "}
           <span className="font-medium text-foreground">{maskedEmail}</span>
+        </p>
+        <p className="text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 text-center mb-8">
+          El código apareció en un aviso de tu navegador. Si lo cerraste, usa "Reenviar".
         </p>
 
         <form onSubmit={handleSubmit}>
-          <div className="flex justify-center gap-2.5 mb-6">
+          <div className="flex justify-center gap-2.5 mb-6" onPaste={handlePaste}>
             {otp.map((digit, i) => (
               <input
                 key={i}

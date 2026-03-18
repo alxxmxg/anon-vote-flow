@@ -1,14 +1,28 @@
 import { useState } from "react";
 import { useVote } from "@/context/VoteContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, Edit, UserCheck, Send } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft, Download, Edit, UserCheck, Send, XCircle, Ban } from "lucide-react";
+import { insertSolicitudArco } from "@/lib/mockDB";
 import { Textarea } from "@/components/ui/textarea";
 
 type ArcoTipo = "acceso" | "rectificacion" | "cancelacion" | "oposicion";
 
+const ARCO_OPTIONS: { tipo: ArcoTipo; label: string; desc: string; icon: React.ReactNode }[] = [
+  { tipo: "acceso", label: "Acceso", desc: "Solicitar una copia de todos tus datos almacenados.", icon: <Download className="w-5 h-5 text-secondary-foreground" /> },
+  { tipo: "rectificacion", label: "Rectificación", desc: "Solicitar la corrección de datos incorrectos.", icon: <Edit className="w-5 h-5 text-secondary-foreground" /> },
+  { tipo: "cancelacion", label: "Cancelación", desc: "Solicitar la eliminación de tus datos personales.", icon: <XCircle className="w-5 h-5 text-secondary-foreground" /> },
+  { tipo: "oposicion", label: "Oposición", desc: "Oponerte al tratamiento de tus datos personales.", icon: <Ban className="w-5 h-5 text-secondary-foreground" /> },
+];
+
+const ARCO_LABELS: Record<ArcoTipo, string> = {
+  acceso: "Acceso",
+  rectificacion: "Rectificación",
+  cancelacion: "Cancelación",
+  oposicion: "Oposición",
+};
+
 export default function ArcoModule() {
-  const { setStep, email, numeroControl, user } = useVote();
+  const { setStep, email, numeroControl } = useVote();
   const [showForm, setShowForm] = useState(false);
   const [selectedTipo, setSelectedTipo] = useState<ArcoTipo | null>(null);
   const [descripcion, setDescripcion] = useState("");
@@ -17,24 +31,13 @@ export default function ArcoModule() {
   const [error, setError] = useState("");
 
   const handleSubmitArco = async () => {
-    if (!selectedTipo || !descripcion.trim() || !user) return;
+    if (!selectedTipo || !descripcion.trim() || !email) return;
     setLoading(true);
     setError("");
 
-    const { error: insertError } = await supabase
-      .from("solicitudes_arco")
-      .insert({
-        user_id: user.id,
-        tipo: selectedTipo,
-        descripcion: descripcion.trim(),
-      });
+    await new Promise((r) => setTimeout(r, 600));
 
-    if (insertError) {
-      setError("Error al enviar la solicitud. Intenta de nuevo.");
-      setLoading(false);
-      return;
-    }
-
+    insertSolicitudArco(email, selectedTipo, descripcion.trim());
     setSuccess(true);
     setLoading(false);
     setDescripcion("");
@@ -86,7 +89,7 @@ export default function ArcoModule() {
         </div>
 
         {success && (
-          <div className="bg-success/10 text-success rounded-lg px-4 py-3 text-sm font-medium">
+          <div className="bg-accent/10 border border-accent/20 rounded-lg px-4 py-3 text-sm font-medium" style={{ color: "hsl(160 60% 40%)" }}>
             ✓ Solicitud ARCO enviada correctamente. Será procesada en un plazo máximo de 15 días hábiles.
           </div>
         )}
@@ -94,37 +97,27 @@ export default function ArcoModule() {
         <div className="space-y-3">
           <h2 className="text-sm font-bold text-foreground">Ejercer tus derechos</h2>
 
-          <button
-            onClick={() => openForm("acceso")}
-            className="w-full flex items-center gap-3 bg-card border border-border rounded-xl p-4 hover:border-primary/40 transition-colors text-left"
-          >
-            <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-              <Download className="w-5 h-5 text-secondary-foreground" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">Acceso</p>
-              <p className="text-xs text-muted-foreground">Solicitar una copia de todos tus datos almacenados.</p>
-            </div>
-          </button>
-
-          <button
-            onClick={() => openForm("rectificacion")}
-            className="w-full flex items-center gap-3 bg-card border border-border rounded-xl p-4 hover:border-primary/40 transition-colors text-left"
-          >
-            <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-              <Edit className="w-5 h-5 text-secondary-foreground" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">Rectificación</p>
-              <p className="text-xs text-muted-foreground">Solicitar la corrección de datos incorrectos.</p>
-            </div>
-          </button>
+          {ARCO_OPTIONS.map((opt) => (
+            <button
+              key={opt.tipo}
+              onClick={() => openForm(opt.tipo)}
+              className="w-full flex items-center gap-3 bg-card border border-border rounded-xl p-4 hover:border-primary/40 transition-colors text-left"
+            >
+              <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                {opt.icon}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">{opt.label}</p>
+                <p className="text-xs text-muted-foreground">{opt.desc}</p>
+              </div>
+            </button>
+          ))}
         </div>
 
         {showForm && (
           <div className="bg-card border border-border rounded-xl p-5 space-y-4">
             <h3 className="text-sm font-bold text-foreground">
-              Solicitud de {selectedTipo === "acceso" ? "Acceso" : "Rectificación"}
+              Solicitud de {selectedTipo ? ARCO_LABELS[selectedTipo] : ""}
             </h3>
             <Textarea
               placeholder="Describe tu solicitud..."
@@ -141,7 +134,7 @@ export default function ArcoModule() {
               </Button>
               <Button
                 onClick={handleSubmitArco}
-                disabled={loading || !descripcion.trim() || !user}
+                disabled={loading || !descripcion.trim() || !email}
                 className="flex-1"
               >
                 <Send className="w-4 h-4 mr-2" />
@@ -152,7 +145,7 @@ export default function ArcoModule() {
         )}
 
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Las solicitudes ARCO serán procesadas y validadas por el administrador del sistema en un plazo máximo de 15 días hábiles. Tu voto anónimo no puede ser accedido ni modificado ya que no está vinculado a tu identidad.
+          Las solicitudes ARCO serán procesadas en un plazo máximo de 15 días hábiles. Tu voto anónimo no puede ser accedido ni modificado ya que no está vinculado a tu identidad.
         </p>
       </div>
     </div>
