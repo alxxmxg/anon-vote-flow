@@ -6,6 +6,14 @@ import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquareQuote } from "lucide-react"; // O cualquier icono de mensaje que prefieras
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const LABELS: Record<string, string> = {
   mantenimiento:    "Mantenimiento",
@@ -14,8 +22,8 @@ const LABELS: Record<string, string> = {
   oferta_academica: "Oferta Académica",
   transporte:       "Transporte",
 };
-//Este componente maneja el carrusel de cada opción
-const ComentariosCarrusel = ({ comentarios }: { comentarios: string[] }) => {
+//Este componente maneja el carrusel de cada opción y un dialogo para ver todos
+const ComentariosCarrusel = ({ comentarios, titulo }: { comentarios: string[], titulo: string }) => {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -33,24 +41,50 @@ const ComentariosCarrusel = ({ comentarios }: { comentarios: string[] }) => {
   if (comentarios.length === 0) return null;
 
   return (
-    <div className="mt-3 bg-muted/20 border border-border/50 rounded-lg p-3 relative overflow-hidden h-14 flex items-center shadow-inner">
-      <div className="absolute left-2.5 opacity-10">
-        <MessageSquareQuote className="w-4 h-4 text-primary" />
+    <div className="mt-3 flex items-center gap-2">
+      <div className="flex-1 bg-muted/20 border border-border/50 rounded-lg p-3 relative overflow-hidden h-14 flex items-center shadow-inner">
+        <div className="absolute left-2.5 opacity-10">
+          <MessageSquareQuote className="w-4 h-4 text-primary" />
+        </div>
+        <div className="pl-6 pr-2 w-full">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={index} // Clave crucial para que Framer Motion detecte el cambio y anime
+              initial={{ opacity: 0, y: 15 }} // Empieza abajo y transparente
+              animate={{ opacity: 1, y: 0 }}  // Sube y se hace opaco
+              exit={{ opacity: 0, y: -15 }}   // Sube más y se desvanece
+              transition={{ duration: 0.4 }}    // Duración de la animación
+              className="text-[11px] italic text-muted-foreground line-clamp-2 leading-tight"
+            >
+              "{comentarios[index]}"
+            </motion.p>
+          </AnimatePresence>
+        </div>
       </div>
-      <div className="pl-6 pr-2 w-full">
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={index} // Clave crucial para que Framer Motion detecte el cambio y anime
-            initial={{ opacity: 0, y: 15 }} // Empieza abajo y transparente
-            animate={{ opacity: 1, y: 0 }}  // Sube y se hace opaco
-            exit={{ opacity: 0, y: -15 }}   // Sube más y se desvanece
-            transition={{ duration: 0.4 }}    // Duración de la animación
-            className="text-[11px] italic text-muted-foreground line-clamp-2 leading-tight"
-          >
-            "{comentarios[index]}"
-          </motion.p>
-        </AnimatePresence>
-      </div>
+      
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="icon" className="h-14 w-14 shrink-0 rounded-lg bg-muted/20 border-border/50 hover:bg-muted/50">
+            <MessageSquareQuote className="h-5 w-5 text-muted-foreground" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-md max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Comentarios Anónimos</DialogTitle>
+            <DialogDescription>
+              Opiniones sobre: <span className="font-semibold text-foreground">{titulo}</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="overflow-y-auto pr-2 space-y-3 flex-1 py-4">
+            {comentarios.map((c, i) => (
+              <div key={i} className="bg-muted/20 p-3 flex gap-3 text-sm rounded-md border border-border/50">
+                <MessageSquareQuote className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                <p className="text-foreground italic leading-relaxed text-[13px]">"{c}"</p>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -189,7 +223,7 @@ export default function ResultadosPage() {
                   </div>
                 </div>
                 {comments.length > 0 && (
-                  <ComentariosCarrusel comentarios={comments} />
+                  <ComentariosCarrusel comentarios={comments} titulo={LABELS[r.problematica] ?? r.problematica} />
                 )}
               </div>
             );
