@@ -5,15 +5,7 @@ import { Users, BarChart3, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquareQuote } from "lucide-react"; // O cualquier icono de mensaje que prefieras
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { MessageSquareQuote, ChevronDown } from "lucide-react";
 
 const LABELS: Record<string, string> = {
   mantenimiento:    "Mantenimiento",
@@ -22,9 +14,10 @@ const LABELS: Record<string, string> = {
   oferta_academica: "Oferta Académica",
   transporte:       "Transporte",
 };
-//Este componente maneja el carrusel de cada opción y un dialogo para ver todos
+//Este componente maneja el carrusel de cada opción y un boton para expandir todos
 const ComentariosCarrusel = ({ comentarios, titulo }: { comentarios: string[], titulo: string }) => {
   const [index, setIndex] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     // Solo inicia el temporizador si hay más de un comentario
@@ -41,50 +34,58 @@ const ComentariosCarrusel = ({ comentarios, titulo }: { comentarios: string[], t
   if (comentarios.length === 0) return null;
 
   return (
-    <div className="mt-3 flex items-center gap-2">
-      <div className="flex-1 bg-muted/20 border border-border/50 rounded-lg p-3 relative overflow-hidden h-14 flex items-center shadow-inner">
-        <div className="absolute left-2.5 opacity-10">
-          <MessageSquareQuote className="w-4 h-4 text-primary" />
-        </div>
-        <div className="pl-6 pr-2 w-full">
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={index} // Clave crucial para que Framer Motion detecte el cambio y anime
-              initial={{ opacity: 0, y: 15 }} // Empieza abajo y transparente
-              animate={{ opacity: 1, y: 0 }}  // Sube y se hace opaco
-              exit={{ opacity: 0, y: -15 }}   // Sube más y se desvanece
-              transition={{ duration: 0.4 }}    // Duración de la animación
-              className="text-[11px] italic text-muted-foreground line-clamp-2 leading-tight"
-            >
-              "{comentarios[index]}"
-            </motion.p>
-          </AnimatePresence>
-        </div>
-      </div>
-      
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="icon" className="h-14 w-14 shrink-0 rounded-lg bg-muted/20 border-border/50 hover:bg-muted/50">
-            <MessageSquareQuote className="h-5 w-5 text-muted-foreground" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-md max-h-[80vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Comentarios Anónimos</DialogTitle>
-            <DialogDescription>
-              Opiniones sobre: <span className="font-semibold text-foreground">{titulo}</span>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="overflow-y-auto pr-2 space-y-3 flex-1 py-4">
-            {comentarios.map((c, i) => (
-              <div key={i} className="bg-muted/20 p-3 flex gap-3 text-sm rounded-md border border-border/50">
-                <MessageSquareQuote className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <p className="text-foreground italic leading-relaxed text-[13px]">"{c}"</p>
-              </div>
-            ))}
+    <div className="mt-3 flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <div className="flex-1 bg-muted/20 border border-border/50 rounded-lg p-3 relative overflow-hidden h-14 flex items-center shadow-inner">
+          <div className="absolute left-2.5 opacity-10">
+            <MessageSquareQuote className="w-4 h-4 text-primary" />
           </div>
-        </DialogContent>
-      </Dialog>
+          <div className="pl-6 pr-2 w-full">
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={index} // Clave crucial para que Framer Motion detecte el cambio y anime
+                initial={{ opacity: 0, y: 15 }} // Empieza abajo y transparente
+                animate={{ opacity: 1, y: 0 }}  // Sube y se hace opaco
+                exit={{ opacity: 0, y: -15 }}   // Sube más y se desvanece
+                transition={{ duration: 0.4 }}    // Duración de la animación
+                className="text-[11px] italic text-muted-foreground line-clamp-2 leading-tight"
+              >
+                "{comentarios[index]}"
+              </motion.p>
+            </AnimatePresence>
+          </div>
+        </div>
+        
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={() => setIsOpen(!isOpen)}
+          className="h-14 w-14 shrink-0 rounded-lg bg-muted/20 border-border/50 hover:bg-muted/50 transition-all"
+        >
+          <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        </Button>
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-2 pb-1 space-y-2">
+              <p className="text-[11px] font-semibold text-muted-foreground px-1 mb-2">Todas las opiniones sobre {titulo} ({comentarios.length}):</p>
+              {comentarios.map((c, i) => (
+                <div key={i} className="bg-muted/10 p-3 flex gap-3 text-sm rounded-md border border-border/40">
+                  <MessageSquareQuote className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5 opacity-70" />
+                  <p className="text-foreground italic leading-relaxed text-[12px]">"{c}"</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

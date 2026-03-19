@@ -8,7 +8,7 @@ Sistema de votación digital diseñado para el **Instituto Tecnológico de Mexic
 
 ---
 
-## ✨ Características Principales (11 Core Features)
+## Características Principales (11 Core Features)
 
 El sistema ha sido diseñado bajo principios de ingeniería de software para garantizar escalabilidad y seguridad:
 
