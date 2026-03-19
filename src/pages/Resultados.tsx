@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import { useConsultaConfig, useResultados, useParticipantes } from "@/lib/supabaseHooks";
+import { useConsultaConfig, useResultados, useParticipantes, useNotasAnonimas } from "@/lib/supabaseHooks";
 import { Users, BarChart3, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
+import { motion, AnimatePresence } from "framer-motion";
+import { MessageSquareQuote } from "lucide-react"; // O cualquier icono de mensaje que prefieras
 
 const LABELS: Record<string, string> = {
   mantenimiento:    "Mantenimiento",
@@ -12,6 +14,46 @@ const LABELS: Record<string, string> = {
   oferta_academica: "Oferta Académica",
   transporte:       "Transporte",
 };
+//Este componente maneja el carrusel de cada opción
+const ComentariosCarrusel = ({ comentarios }: { comentarios: string[] }) => {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    // Solo inicia el temporizador si hay más de un comentario
+    if (comentarios.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % comentarios.length);
+    }, 4000); // Cambia cada 4 segundos
+
+    return () => clearInterval(interval);
+  }, [comentarios]);
+
+  // Si no hay comentarios, no renderiza nada
+  if (comentarios.length === 0) return null;
+
+  return (
+    <div className="mt-3 bg-muted/20 border border-border/50 rounded-lg p-3 relative overflow-hidden h-14 flex items-center shadow-inner">
+      <div className="absolute left-2.5 opacity-10">
+        <MessageSquareQuote className="w-4 h-4 text-primary" />
+      </div>
+      <div className="pl-6 pr-2 w-full">
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={index} // Clave crucial para que Framer Motion detecte el cambio y anime
+            initial={{ opacity: 0, y: 15 }} // Empieza abajo y transparente
+            animate={{ opacity: 1, y: 0 }}  // Sube y se hace opaco
+            exit={{ opacity: 0, y: -15 }}   // Sube más y se desvanece
+            transition={{ duration: 0.4 }}    // Duración de la animación
+            className="text-[11px] italic text-muted-foreground line-clamp-2 leading-tight"
+          >
+            "{comentarios[index]}"
+          </motion.p>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
 
 const COLORS = ["hsl(220,70%,45%)", "hsl(160,60%,40%)", "hsl(38,92%,50%)", "hsl(280,60%,50%)", "hsl(0,65%,50%)"];
 
@@ -19,15 +61,17 @@ export default function ResultadosPage() {
   const { data: cfg, isLoading: loadingCfg } = useConsultaConfig();
   const { data: rawResultados, isLoading: loadingRes, refetch: refetchRes } = useResultados();
   const { data: participantes = 0, isLoading: loadingPart, refetch: refetchPart } = useParticipantes();
+  const { data: notas = {}, isLoading: loadingNotas, refetch: refetchNotas } = useNotasAnonimas();
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
   const load = () => {
     refetchRes();
     refetchPart();
+    refetchNotas();
     setLastUpdate(new Date());
   };
 
-  if (loadingCfg || loadingRes || loadingPart || !cfg || !rawResultados) {
+  if (loadingCfg || loadingRes || loadingPart || loadingNotas || !cfg || !rawResultados) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -115,32 +159,41 @@ export default function ResultadosPage() {
 
         {/* Ranking list */}
         <div className="space-y-2 mb-6">
-          {resultados.map((r, i) => (
-            <div key={r.problematica} className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-white shrink-0"
-                style={{ background: COLORS[i % COLORS.length] }}>
-                {i + 1}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">{LABELS[r.problematica] ?? r.problematica}</p>
-                <div className="w-full bg-muted rounded-full h-1.5 mt-1">
-                  <div
-                    className="h-1.5 rounded-full transition-all duration-700"
-                    style={{
-                      width: `${totalVotos > 0 ? (r.votos / resultados[0].votos) * 100 : 0}%`,
-                      background: COLORS[i % COLORS.length],
-                    }}
-                  />
+          {resultados.map((r, i) => {
+            const comments = notas[r.problematica]?.map(n => n.nota) || [];
+            
+            return (
+              <div key={r.problematica} className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-white shrink-0"
+                    style={{ background: COLORS[i % COLORS.length] }}>
+                    {i + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{LABELS[r.problematica] ?? r.problematica}</p>
+                    <div className="w-full bg-muted rounded-full h-1.5 mt-1">
+                      <div
+                        className="h-1.5 rounded-full transition-all duration-700"
+                        style={{
+                          width: `${totalVotos > 0 ? (r.votos / resultados[0].votos) * 100 : 0}%`,
+                          background: COLORS[i % COLORS.length],
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-bold text-foreground">{r.votos}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {totalVotos > 0 ? ((r.votos / totalVotos) * 100).toFixed(1) : 0}%
+                    </p>
+                  </div>
                 </div>
+                {comments.length > 0 && (
+                  <ComentariosCarrusel comentarios={comments} />
+                )}
               </div>
-              <div className="text-right shrink-0">
-                <p className="text-sm font-bold text-foreground">{r.votos}</p>
-                <p className="text-xs text-muted-foreground">
-                  {totalVotos > 0 ? ((r.votos / totalVotos) * 100).toFixed(1) : 0}%
-                </p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="flex items-center justify-between py-2 mb-8">
