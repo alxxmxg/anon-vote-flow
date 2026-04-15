@@ -26,7 +26,7 @@ export default function AvisoPrivacidad() {
           Sistema de Consulta Universitaria
         </p>
 
-        <div className="bg-card rounded-xl border border-border p-5 mb-6 space-y-4">
+        <div id="tour-privacy-content" className="bg-card rounded-xl border border-border p-5 mb-6 space-y-4">
           <div className="flex gap-3">
             <FileText className="w-5 h-5 text-primary mt-0.5 shrink-0" />
             <div>
@@ -63,6 +63,7 @@ export default function AvisoPrivacidad() {
         </p>
 
         <Button
+          id="tour-privacy-btn"
           onClick={handleAccept}
           className="w-full h-12 text-base font-semibold rounded-xl"
         >

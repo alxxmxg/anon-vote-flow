@@ -19,7 +19,7 @@ export default function IntroPage() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-5 py-8 text-center animate-in fade-in zoom-in-95 duration-700">
       
       {/* Container del Logo */}
-      <div className="w-full max-w-sm mb-6 bg-white p-6 rounded-3xl shadow-sm border border-border/50">
+      <div id="tour-intro-box" className="w-full max-w-sm mb-6 bg-white p-6 rounded-3xl shadow-sm border border-border/50">
         <img 
           src="/logotec.jpg" 
           alt="Logotipo Institucional" 
@@ -43,6 +43,7 @@ export default function IntroPage() {
       </p>
 
       <Button 
+        id="tour-intro-btn"
         onClick={() => setStep("privacy")}
         className="h-14 px-8 text-base font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all w-full max-w-xs gap-2"
         size="lg"

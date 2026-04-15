@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import { verifyFolio } from "@/lib/mockDB";
 import { useConsultaConfig } from "@/lib/supabaseHooks";
 import ThemeToggle from "@/components/ThemeToggle";
+import TutorialButton from "@/components/TutorialButton";
+import { useEffect } from "react";
+import { startTutorial } from "@/lib/tutorialConfig";
 
 export default function VerificarPage() {
   const [folio, setFolio] = useState("");
@@ -20,6 +23,12 @@ export default function VerificarPage() {
     setResult(exists ? "found" : "not_found");
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (loadingCfg || !cfg) return;
+    const tm = setTimeout(() => startTutorial("verificar", false), 300);
+    return () => clearTimeout(tm);
+  }, [loadingCfg, cfg]);
 
   if (loadingCfg || !cfg) {
     return (
@@ -46,13 +55,14 @@ export default function VerificarPage() {
 
         <div className="flex gap-2 mb-4">
           <Input
+            id="tour-verificar-input"
             value={folio}
             onChange={(e) => { setFolio(e.target.value); setResult("none"); }}
             placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
             className="h-12 rounded-xl font-mono text-sm"
             onKeyDown={(e) => e.key === "Enter" && handleVerify()}
           />
-          <Button onClick={handleVerify} disabled={loading || !folio.trim()} className="h-12 px-5 rounded-xl shrink-0">
+          <Button id="tour-verificar-btn" onClick={handleVerify} disabled={loading || !folio.trim()} className="h-12 px-5 rounded-xl shrink-0">
             <Search className="w-4 h-4" />
           </Button>
         </div>
@@ -82,6 +92,7 @@ export default function VerificarPage() {
           <a href="/resultados" className="hover:text-primary transition-colors">Ver resultados →</a>
         </div>
       </div>
+      <TutorialButton />
     </div>
   );
 }

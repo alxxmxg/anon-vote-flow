@@ -88,7 +88,7 @@ export default function BoletaVotacion() {
 
       {error && <div className="px-5 mb-2"><p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p></div>}
 
-      <div className="flex-1 px-5 pb-32 space-y-3 pt-1">
+      <div id="tour-boleta-list" className="flex-1 px-5 pb-32 space-y-3 pt-1">
         {problematicas.map((p) => {
           const isSelected = selected.has(p.id);
           const noteOpen   = showNote.has(p.id);
@@ -141,7 +141,7 @@ export default function BoletaVotacion() {
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-5">
-        <Button onClick={handleVote} disabled={selectedCount === 0 || loading}
+        <Button id="tour-boleta-btn" onClick={handleVote} disabled={selectedCount === 0 || loading}
           className="w-full h-12 text-base font-semibold rounded-xl bg-accent hover:bg-accent/90 text-accent-foreground">
           {loading ? "Procesando..." : selectedCount === 0
             ? "Selecciona al menos una opción"

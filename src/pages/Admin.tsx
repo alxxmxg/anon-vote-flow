@@ -3,6 +3,9 @@ import AdminPanel from "@/components/AdminPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Shield, Lock } from "lucide-react";
+import TutorialButton from "@/components/TutorialButton";
+import { useEffect } from "react";
+import { startTutorial } from "@/lib/tutorialConfig";
 
 // Demo admin password — change this to whatever you want
 const ADMIN_PASSWORD = "admin";
@@ -22,6 +25,13 @@ export default function AdminPage() {
     }
   };
 
+  useEffect(() => {
+    if (!isAdmin) {
+      const tm = setTimeout(() => startTutorial("admin", false), 300);
+      return () => clearTimeout(tm);
+    }
+  }, [isAdmin]);
+
   if (isAdmin) return <AdminPanel />;
 
   return (
@@ -40,6 +50,7 @@ export default function AdminPage() {
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
+              id="tour-admin-input"
               type="password"
               placeholder="Contraseña de administrador"
               value={password}
@@ -49,7 +60,7 @@ export default function AdminPage() {
             />
           </div>
           {error && <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>}
-          <Button type="submit" className="w-full h-12 rounded-xl text-base font-semibold">
+          <Button id="tour-admin-btn" type="submit" className="w-full h-12 rounded-xl text-base font-semibold">
             Ingresar al Panel
           </Button>
         </form>
@@ -58,6 +69,7 @@ export default function AdminPage() {
           ← Volver al sistema de votación
         </a>
       </div>
+      <TutorialButton />
     </div>
   );
 }

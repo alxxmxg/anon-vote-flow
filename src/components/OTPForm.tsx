@@ -79,6 +79,7 @@ export default function OTPForm() {
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
             <Input
+              id="tour-otp-input"
               ref={inputRef}
               type="text"
               inputMode="numeric"
@@ -98,6 +99,7 @@ export default function OTPForm() {
           )}
 
           <Button
+            id="tour-otp-btn"
             type="submit"
             disabled={loading}
             className="w-full h-12 text-base font-semibold rounded-xl mb-4"

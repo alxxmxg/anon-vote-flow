@@ -10,6 +10,9 @@ import StepIndicator from "@/components/StepIndicator";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useConsultaConfig } from "@/lib/supabaseHooks";
 import { CalendarX, Loader2 } from "lucide-react";
+import TutorialButton from "@/components/TutorialButton";
+import { useEffect } from "react";
+import { startTutorial, TutorialStep } from "@/lib/tutorialConfig";
 
 function ConsultaClosed({ cfg }: { cfg: any }) {
   return (
@@ -40,6 +43,19 @@ function ConsultaFlow() {
   const { step } = useVote();
   const { data: cfg, isLoading } = useConsultaConfig();
 
+  useEffect(() => {
+    // Only fire tutorial for standard steps
+    if (isLoading || !cfg) return; // Wait until loaded
+    
+    const validSteps = ["intro", "privacy", "login", "otp", "ballot"];
+    if (validSteps.includes(step)) {
+      const tm = setTimeout(() => {
+        startTutorial(step as TutorialStep, false);
+      }, 300); // give DOM time to paint
+      return () => clearTimeout(tm);
+    }
+  }, [step, isLoading, cfg]);
+
   if (isLoading || !cfg) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -65,6 +81,7 @@ function ConsultaFlow() {
       {step === "ballot"   && <BoletaVotacion />}
       {step === "success"  && <PantallaExito />}
       {step === "arco"     && <ArcoModule />}
+      <TutorialButton currentStep={step} />
     </div>
   );
 }

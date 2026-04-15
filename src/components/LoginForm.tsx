@@ -84,7 +84,7 @@ export default function LoginForm() {
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                id="email"
+                id="tour-login-email"
                 type="email"
                 placeholder="tu.nombre@itmexicali.edu.mx"
                 value={localEmail}
@@ -102,7 +102,7 @@ export default function LoginForm() {
             <div className="relative">
               <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                id="control"
+                id="tour-login-control"
                 type="text"
                 placeholder="20210001"
                 value={localControl}
@@ -120,6 +120,7 @@ export default function LoginForm() {
           )}
 
           <Button
+            id="tour-login-btn"
             type="submit"
             disabled={loading}
             className="w-full h-12 text-base font-semibold rounded-xl"
